@@ -1,60 +1,71 @@
+let x = [];
+let y = []; // signal
+let fourierX = [];
+let fourierY = []; // discret fourier tranform of that signal
+
 let time = 0;
-
-let waves = [];
-
-let slider;
-
-let timeSlider;
+let path = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  slider = createSlider(1, 20, 1);
-  slider.position(10, 10);
 
-  timeSlider = createSlider(0, 10, 1);
-  timeSlider.position(10, 40);
+  const skip = 10;
+  for (let i = 0; i < drawing.length; i += skip) {
+    x.push(drawing[i].x);
+    y.push(drawing[i].y);
+  }
+  fourierX = dft(x);
+  fourierY = dft(y);
+
+  fourierX.sort((a, b) => b.amp - a.amp);
+  fourierY.sort((a, b) => b.amp - a.amp);
 }
 
-function draw() {
-  background(0);
-  translate(200, 200);
-
-  let x = 0;
-  let y = 0;
-
-  for (let i = 0; i < slider.value(); i++) {
-    const n = i * 2 + 1;
-    const radius = 50 * (4 / (n * PI));
-
+function epiCycles(x, y, rotation, fourier) {
+  for (let i = 0; i < fourier.length; i++) {
     const prevX = x;
     const prevY = y;
 
-    x += radius * cos(n * time);
-    y += radius * sin(n * time);
+    const { freq, amp, phase } = fourier[i];
+    x += amp * cos(freq * time + phase + rotation);
+    y += amp * sin(freq * time + phase + rotation);
 
     stroke(255, 100);
     noFill();
-    ellipse(prevX, prevY, 2 * radius);
+    ellipse(prevX, prevY, 2 * amp);
 
     stroke(255);
     line(prevX, prevY, x, y);
   }
 
-  waves.unshift(y);
+  return createVector(x, y);
+}
 
-  translate(200, 0);
-  line(x - 200, y, 0, waves[0]);
+function draw() {
+  background(0);
+
+  const vx = epiCycles(window.width / 2, 100, 0, fourierX);
+  const vy = epiCycles(100, height / 2, HALF_PI, fourierY);
+  const v = createVector(vx.x, vy.y);
+
+  path.unshift(v);
+
+  line(vx.x, vx.y, v.x, v.y);
+  line(vy.x, vy.y, v.x, v.y);
 
   beginShape();
   noFill();
-  for (let i = 0; i < waves.length; i++) {
-    vertex(i, waves[i]);
+  stroke("yellow");
+  for (let i = 0; i < path.length; i++) {
+    vertex(path[i].x, path[i].y);
   }
   endShape();
 
-  if (waves.length > 600) {
-    waves.pop();
-  }
+  const dt = TWO_PI / fourierY.length;
+  time += dt;
 
-  time += timeSlider.value() / 100;
+  if (time > TWO_PI) {
+    time = 0;
+    path = [];
+  }
 }
