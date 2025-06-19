@@ -2,18 +2,50 @@ let x = [];
 let y = []; // signal
 let fourierX = [];
 let fourierY = []; // discret fourier tranform of that signal
+let font;
+let rawPoints = [];
+
+function preload() {
+  // Load any readable .ttf/.otf font; here we use SourceCodePro from CDN
+  font = loadFont(
+    "https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf"
+  );
+}
 
 let time = 0;
 let path = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  // Convert "Happy"
+  let pointsHappy = font.textToPoints("Harshith", 100, 150, 80, {
+    sampleFactor: 0.2,
+    simplifyThreshold: 0,
+  });
 
-  const skip = 10;
-  for (let i = 0; i < drawing.length; i += skip) {
-    x.push(drawing[i].x);
-    y.push(drawing[i].y);
+  // Convert "Birthday"
+  let pointsBirthday = font.textToPoints("Ashvi", 100, 250, 80, {
+    sampleFactor: 0.2,
+    simplifyThreshold: 0,
+  });
+
+  // Combine and normalize points
+  rawPoints = [...pointsHappy, ...pointsBirthday];
+  const centeredPoints = rawPoints.map((p) => ({
+    x: p.x - width / 2,
+    y: p.y - height / 2,
+  }));
+
+  for (let i = 0; i < centeredPoints.length; i++) {
+    x.push(centeredPoints[i].x);
+    y.push(centeredPoints[i].y);
   }
+
+  // const skip = 10;
+  // for (let i = 0; i < drawing.length; i += skip) {
+  //   x.push(drawing[i].x);
+  //   y.push(drawing[i].y);
+  // }
   fourierX = dft(x);
   fourierY = dft(y);
 
