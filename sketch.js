@@ -2,9 +2,7 @@ const USER = 0;
 const FOURIER = 1;
 
 let x = [];
-let y = []; // signal
 let fourierX = [];
-let fourierY = []; // discret fourier tranform of that signal
 
 let drawing = [];
 let state = -1;
@@ -15,9 +13,7 @@ let path = [];
 function mousePressed() {
   state = USER;
   x = [];
-  y = [];
   fourierX = [];
-  fourierY = [];
   time = 0;
   path = [];
   drawing = [];
@@ -28,14 +24,12 @@ function mouseReleased() {
 
   const skip = 1;
   for (let i = 0; i < drawing.length; i += skip) {
-    x.push(drawing[i].x);
-    y.push(drawing[i].y);
+    const c = new Complex(drawing[i].x, drawing[i].y);
+    x.push(c);
   }
   fourierX = dft(x);
-  fourierY = dft(y);
 
   fourierX.sort((a, b) => b.amp - a.amp);
-  fourierY.sort((a, b) => b.amp - a.amp);
 }
 
 function setup() {
@@ -76,14 +70,8 @@ function draw() {
     }
     endShape();
   } else if (state === FOURIER) {
-    const vx = epiCycles(window.width / 2, 100, 0, fourierX);
-    const vy = epiCycles(100, height / 2, HALF_PI, fourierY);
-    const v = createVector(vx.x, vy.y);
-
+    const v = epiCycles(width / 2, height / 2, 0, fourierX);
     path.unshift(v);
-
-    line(vx.x, vx.y, v.x, v.y);
-    line(vy.x, vy.y, v.x, v.y);
 
     beginShape();
     noFill();
@@ -93,7 +81,7 @@ function draw() {
     }
     endShape();
 
-    const dt = TWO_PI / fourierY.length;
+    const dt = TWO_PI / fourierX.length;
     time += dt;
 
     if (time > TWO_PI) {
